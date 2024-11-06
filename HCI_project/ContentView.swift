@@ -81,7 +81,7 @@ struct ToolbarSolutionView: View {
 
 
 #Preview {
-    ContentView()
+    //ContentView()
     Cview()
     ToolbarSolutionView()
     
