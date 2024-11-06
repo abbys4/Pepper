@@ -14,6 +14,7 @@ struct ContentView: View {
                 .imageScale(.large)
                 .foregroundStyle(.tint)
             Text("Updated Hello PEPPER")
+            
         }
         .padding()
     }
@@ -26,8 +27,17 @@ struct ToolbarSolutionView: View {
             Text("Content")
                 .toolbar {
                     ToolbarItemGroup(placement: .bottomBar) {
-                        Button("Greeting") {
-                            print("Hello world!")
+                        Button("Activity") {
+                            print("Hello Activity!")
+                        }
+                        Button("Groceries") {
+                            print("Hello Groceries!")
+                        }
+                        Button("Recipes") {
+                            print("Hello Recipes!")
+                        }
+                        Button("Delivery") {
+                            print("Hello Delivery!")
                         }
                     }
                 }
@@ -37,4 +47,5 @@ struct ToolbarSolutionView: View {
 
 #Preview {
     ContentView()
+    ToolbarSolutionView()
 }
