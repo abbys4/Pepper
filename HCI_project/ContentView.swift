@@ -19,6 +19,22 @@ struct ContentView: View {
     }
 }
 
+
+struct ToolbarSolutionView: View {
+    var body: some View {
+        NavigationView{ //NavigationStack
+            Text("Content")
+                .toolbar {
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        Button("Greeting") {
+                            print("Hello world!")
+                        }
+                    }
+                }
+        }
+    }
+}
+
 #Preview {
     ContentView()
 }
