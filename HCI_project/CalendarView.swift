@@ -1,4 +1,3 @@
-
 //
 //  CalendarView.swift
 //  HCI_project
@@ -82,10 +81,10 @@ struct CalendarDay: View {
 }
 
 struct CalendarView: View {
+    @ObservedObject var viewState: ViewStateManager
     @State private var selectedDate: Date = Date()
     @State private var currentMonth: Date = Date()
     @State private var selectedMonthActivities: [DayActivity] = []
-   // @State private var selectedActivities: [(Color, UUID)] = []
     @State private var selectedColors: [Color] = [.red,.orange]
     
     // Sample activity data structure
@@ -143,38 +142,8 @@ struct CalendarView: View {
     }
     
     var body: some View {
-        NavigationStack{
+        NavigationView {
             VStack(spacing: 20) {
-                // Navigation bar
-                HStack {
-                    Text("Activity")
-                        .font(.title)
-                        .bold()
-                    
-                    Spacer()
-                    
-                    
-                    Menu {
-                        // Button("List View") { //navigate to List View
-                        NavigationLink("List View", destination:  ContentView2())
-                        // }
-                    } label: {
-                        HStack {
-                            Text("Calendar View")
-                                .foregroundColor(.green)
-                            Image(systemName: "chevron.down")
-                                .foregroundColor(.green)
-                        }
-                    }
-                    
-                    Circle()
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(width: 32, height: 32)
-                        .overlay(Image(systemName: "person.crop.circle.fill")
-                            .foregroundColor(.gray))
-                }
-                .padding(.horizontal)
-                
                 // Month navigation and label
                 HStack {
                     Button(action: previousMonth) {
@@ -257,6 +226,23 @@ struct CalendarView: View {
                 
                 
             }
+            .navigationTitle("Activity")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("List View") {
+                            viewState.currentView = .list
+                        }
+                    } label: {
+                        HStack {
+                            Text("Calendar View")
+                                .foregroundColor(.green)
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.green)
+                        }
+                    }
+                }
+            }
             .onAppear {
                 
                 formatter.dateFormat = "E, d MMM y"
@@ -298,10 +284,12 @@ struct TabBarItem: View {
         .frame(maxWidth: .infinity)
     }
 }
-struct ContentView4 : View {
+struct ContentView4: View {
+    @StateObject private var viewState = ViewStateManager()
+    
     var body: some View {
         TabView {
-            CalendarView()
+            CalendarView(viewState: viewState)
                 .tabItem {
                     VStack {
                         Image(systemName: "circle.hexagongrid.fill")
@@ -338,11 +326,7 @@ struct ContentView4 : View {
 }
 struct ActivityCalendarView_Previews: PreviewProvider {
     static var previews: some View {
-        
-       // ActivityCalendarView()
         ContentView4()
-        
-        //ContentView2()
     }
 }
 

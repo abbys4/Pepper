@@ -21,7 +21,7 @@ struct ContentView2: View {
                         }
                     }
             } else {
-                CalendarView()
+                CalendarView(viewState: viewState)
                     .tabItem {
                         VStack {
                             Image(systemName: "circle.hexagongrid.fill")
