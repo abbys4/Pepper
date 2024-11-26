@@ -86,6 +86,7 @@ struct CalendarView: View {
     @State private var currentMonth: Date = Date()
     @State private var selectedMonthActivities: [DayActivity] = []
     @State private var selectedColors: [Color] = [.red,.orange]
+    @State private var selectedActivities: [(Color, UUID)] = []
     
     // Sample activity data structure
     struct DayActivity {
@@ -205,18 +206,23 @@ struct CalendarView: View {
                 //display colors from selected day
                 Text(formatter.string(from: selectedDate))
                 
-                let selectedActivities = selectedMonthActivities.first(where: {
+                
+               
+                var selectedActivities = selectedMonthActivities.first(where: {
                     calendar.isDate($0.date, inSameDayAs: selectedDate)
                 })?.activities ?? []
-               
                 
                 if !selectedColors.isEmpty {
                     HStack(spacing: 6) {
-                        ForEach(selectedColors, id: \.self) {activity in
+
+                        ForEach(selectedActivities.indices, id: \.self) {index in
                             Circle()
                                 .fill(.red)
+                                .fill(selectedActivities[index].0)
                                 .frame(width: 24, height: 24)
                         }
+                        
+                       
                     }
                                         .padding(.top, 4)
                 }
