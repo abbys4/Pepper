@@ -1,3 +1,4 @@
+
 //
 //  CalendarView.swift
 //  HCI_project
@@ -7,198 +8,279 @@
 
 import SwiftUI
 
-struct ActivityCalendarView: View {
-    @ObservedObject var viewState: ViewStateManager
-    @State private var selectedDate = Date()
-    @State private var showingCalendarOptions = false
-    
-    // Sample activity data structure
-    struct DayActivity: Identifiable {
-        let id = UUID()
-        let date: Date
-        let activities: [ActivityType]
+let formatter = DateFormatter()
+
+extension Date {
+    func startOfMonth () -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year,.month],from:self)
+        return calendar.date(from: components) ?? self
     }
     
-    enum ActivityType {
-        case red, orange, yellow, green, blue, brown
+    func endOfMonth() -> Date {
+        let calendar = Calendar.current
+        let components = DateComponents(month: 1, day: -1)
+        return calendar.date(byAdding: components, to: self.startOfMonth()) ?? self
+    }
+    
+    var dayOfMonth: Int {
+        Calendar.current.component(.day, from: self)
+    }
+}
+
+struct ActivityDot: View {
+    let color: Color
+    
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 6, height: 6)
+    }
+}
+
+struct CalendarDay: View {
+    let date: Date?
+    let dots: [(Color, UUID)]
+    let isSelected: Bool
+    let isToday: Bool
+    
+    var body: some View {
+        if let date = date {
+            VStack(spacing: 4) {
+                Text("\(date.dayOfMonth)")
+                    .font(.system(size: 16))
+                    .foregroundColor(isSelected ? .white : .primary)
+                
+                // Activity dots
+                HStack(spacing: 4) {
+                    ForEach(dots, id: \.1) {
+                        dot in ActivityDot(color: isSelected ? .white : dot.0)
+                    }
+                }
+            }
+            .frame(height: 45)
+            .background(
+                ZStack {
+                    if isSelected {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 32, height: 32)
+                    }
+                    if isToday && !isSelected {
+                        Circle()
+                            .stroke(Color.green, lineWidth: 1)
+                            .frame(width: 32, height: 32)
+                    }
+                }
+            )
+            .contentShape(Rectangle())
+        } else {
+            Color.clear
+                .frame(height: 45)
+        }
+    }
+}
+
+struct CalendarView: View {
+    @State private var selectedDate: Date = Date()
+    @State private var currentMonth: Date = Date()
+    @State private var selectedMonthActivities: [DayActivity] = []
+   // @State private var selectedActivities: [(Color, UUID)] = []
+    @State private var selectedColors: [Color] = [.red,.orange]
+    
+    // Sample activity data structure
+    struct DayActivity {
+        let date: Date
+        let activities: [(Color, UUID)]
+    }
+    
+    let calendar = Calendar.current
+    let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+    let weekdays = ["S", "M", "T", "W", "T", "F", "S"]
+    
+    // Generate dates for the current month view
+    func datesInMonth() -> [Date?] {
+        let monthStart = currentMonth.startOfMonth()
+        let monthEnd = currentMonth.endOfMonth()
+        
+        let firstWeekday = calendar.component(.weekday, from: monthStart)
+        let daysInMonth = calendar.component(.day, from: monthEnd)
+        
+        var dates: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
+        
+        for day in 1...daysInMonth {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: monthStart) {
+                dates.append(date)
+            }
+        }
+        
+        // Add padding to complete the last week
+        while dates.count % 7 != 0 {
+            dates.append(nil)
+        }
+        
+        return dates
+    }
+    
+    // Sample data generator for the current month
+    func generateActivitiesForMonth() {
+        let dates = datesInMonth().compactMap { $0 }
+        selectedMonthActivities = dates.map { date in
+            // Generate random activities for demonstration
+            let numberOfActivities = Int.random(in: 1...4)
+            let colors: [Color] = [.blue, .green, .orange, .red, .yellow, .brown]
+            let activities = (0..<numberOfActivities).map { _ in
+                (colors.randomElement() ?? .blue, UUID())
+            }
+            return DayActivity(date: date, activities: activities)
+        }
+    }
+    
+    var monthYearString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: currentMonth)
     }
     
     var body: some View {
-        
-        NavigationView {
-            VStack(spacing: 0) {
-              // NavigationLink("ListView", destination: ContentView2())
-                // Calendar header
+        NavigationStack{
+            VStack(spacing: 20) {
+                // Navigation bar
                 HStack {
                     Text("Activity")
-                        .font(.largeTitle)
+                        .font(.title)
                         .bold()
+                    
                     Spacer()
+                    
+                    
                     Menu {
-                        Button("List View") {
-                            viewState.currentView = .list
-                        }
+                        // Button("List View") { //navigate to List View
+                        NavigationLink("List View", destination:  ContentView2())
+                        // }
                     } label: {
                         HStack {
                             Text("Calendar View")
                                 .foregroundColor(.green)
                             Image(systemName: "chevron.down")
                                 .foregroundColor(.green)
-                            
                         }
                     }
                     
-                    // Profile image
                     Circle()
                         .fill(Color.gray.opacity(0.2))
                         .frame(width: 32, height: 32)
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundColor(.gray)
-                        )
+                        .overlay(Image(systemName: "person.crop.circle.fill")
+                            .foregroundColor(.gray))
                 }
-                .padding()
+                .padding(.horizontal)
+                
+                // Month navigation and label
+                HStack {
+                    Button(action: previousMonth) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    
+                    Text(monthYearString)
+                        .font(.title2)
+                        .bold()
+                        .frame(maxWidth: .infinity)
+                    
+                    Button(action: nextMonth) {
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.green)
+                    }
+                }
+                .padding(.horizontal)
+                
+                // Weekday headers
+                LazyVGrid(columns: columns, spacing: 0) {
+                    ForEach(weekdays, id: \.self) { day in
+                        Text(day)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.gray)
+                            .frame(height: 40)
+                    }
+                }
                 
                 // Calendar grid
-                VStack(spacing: 20) {
-                    // Weekday headers
-                    HStack {
-                        ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
-                            Text(day)
-                                .frame(maxWidth: .infinity)
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    
-                    // Month label
-                    HStack {
-                        Text("October")
-                            .font(.title2)
-                            .bold()
-                        Spacer()
-                    }
-                    .padding(.horizontal)
-                    
-                    // Calendar days
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 15) {
-                        ForEach(1...31, id: \.self) { day in
-                            VStack(spacing: 8) {
-                                Text("\(day)")
-                                    .font(.system(size: 16))
-                                
-                                // Activity dots
-                                if day <= 24 {
-                                    ActivityDotsView(activities: sampleActivities(for: day))
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(Array(datesInMonth().enumerated()), id: \.offset) { _, date in
+                        if let date = date {
+                            let activities = selectedMonthActivities.first(where: {
+                                calendar.isDate($0.date, inSameDayAs: date)
+                            })?.activities ?? []
+                            
+                            
+                            CalendarDay(
+                                date: date,
+                                dots: activities,
+                                isSelected: calendar.isDate(date, inSameDayAs: selectedDate),
+                                isToday: calendar.isDateInToday(date)
+                            )
+                            .onTapGesture {
+                                print(date)
+                               
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedDate = date
                                 }
                             }
-                            .frame(height: 50)
-                            .opacity(day > 24 ? 0.3 : 1.0)
+                        } else {
+                            CalendarDay(date: nil, dots: [], isSelected: false, isToday: false)
                         }
                     }
                 }
-                .padding()
+                .padding(.horizontal)
                 
-                Spacer()
+                //display colors from selected day
+                Text(formatter.string(from: selectedDate))
                 
-                // Tab bar
-                // CustomTabBar()
-                TabView {
-                    
-                Spacer()
-                    .tabItem {
-                        VStack {
-                            Image(systemName: "circle.hexagongrid.fill")
-                            Text("Activity")
+                let selectedActivities = selectedMonthActivities.first(where: {
+                    calendar.isDate($0.date, inSameDayAs: selectedDate)
+                })?.activities ?? []
+               
+                
+                if !selectedColors.isEmpty {
+                    HStack(spacing: 6) {
+                        ForEach(selectedColors, id: \.self) {activity in
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 24, height: 24)
                         }
                     }
-                    
-                    Text("Groceries")
-                        .tabItem {
-                            VStack {
-                                Image(systemName: "cart")
-                                Text("Groceries")
-                            }
-                        }
-                    
-                    Text("Recipes")
-                        .tabItem {
-                            VStack {
-                                Image(systemName: "book")
-                                Text("Recipes")
-                            }
-                        }
-                    
-                    Text("Delivery")
-                        .tabItem {
-                            VStack {
-                                Image(systemName: "bag")
-                                Text("Delivery")
-                            }
-                        }
-                }.tint(.green)
-            }
-        }
-    }
-    
-    // Helper to generate sample activities
-    private func sampleActivities(for day: Int) -> [ActivityType] {
-        let possibilities: [ActivityType] = [.red, .orange, .yellow, .green, .blue, .brown]
-        return Array(possibilities.shuffled().prefix(Int.random(in: 3...5)))
-    }
-}
-
-struct ActivityDotsView: View {
-    let activities: [ActivityCalendarView.ActivityType]
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<min(activities.count, 3), id: \.self) { index in
-                Circle()
-                    .fill(color(for: activities[index]))
-                    .frame(width: 6, height: 6)
-            }
-        }
-        if activities.count > 3 {
-            HStack(spacing: 4) {
-                ForEach(3..<activities.count, id: \.self) { index in
-                    Circle()
-                        .fill(color(for: activities[index]))
-                        .frame(width: 6, height: 6)
+                                        .padding(.top, 4)
                 }
+                Spacer()
+                //bottom bar
+                //ToolbarSolutionView()
+                
+                
+            }
+            .onAppear {
+                
+                formatter.dateFormat = "E, d MMM y"
+                generateActivitiesForMonth()
             }
         }
     }
     
-    private func color(for activity: ActivityCalendarView.ActivityType) -> Color {
-        switch activity {
-        case .red: return .red
-        case .orange: return .orange
-        case .yellow: return .yellow
-        case .green: return .green
-        case .blue: return .blue
-        case .brown: return .brown
+    // Month navigation functions
+    func nextMonth() {
+        withAnimation {
+            currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+            generateActivitiesForMonth()
+        }
+    }
+    
+    func previousMonth() {
+        withAnimation {
+            currentMonth = calendar.date(byAdding: .month, value: -1, to: currentMonth) ?? currentMonth
+            generateActivitiesForMonth()
         }
     }
 }
 
-//struct CustomTabBar: View {
-//    var body: some View {
-//        HStack(spacing: 0) {
-//            TabBarItem(icon: "circles.hexagonpath.fill", text: "Activity", isSelected: true)
-//            TabBarItem(icon: "cart", text: "Groceries")
-//            TabBarItem(icon: "book", text: "Recipes")
-//            TabBarItem(icon: "shippingbox", text: "Delivery")
-//        }
-//        .padding(.vertical, 10)
-//        .background(Color.white)
-//        .overlay(
-//            Rectangle()
-//                .frame(height: 1)
-//                .foregroundColor(.gray.opacity(0.2)),
-//            alignment: .top
-//        )
-//    }
-//}
 
 struct TabBarItem: View {
     let icon: String
@@ -216,10 +298,60 @@ struct TabBarItem: View {
         .frame(maxWidth: .infinity)
     }
 }
-
+struct ContentView4 : View {
+    var body: some View {
+        TabView {
+            CalendarView()
+                .tabItem {
+                    VStack {
+                        Image(systemName: "circle.hexagongrid.fill")
+                        Text("Activity")
+                    }
+                }
+            
+            Text("Groceries")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "cart")
+                        Text("Groceries")
+                    }
+                }
+            
+            Text("Recipes")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "book")
+                        Text("Recipes")
+                    }
+                }
+            
+            Text("Delivery")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "bag")
+                        Text("Delivery")
+                    }
+                }
+        }
+        .tint(.green)
+    }
+}
 struct ActivityCalendarView_Previews: PreviewProvider {
     static var previews: some View {
-        ActivityCalendarView(viewState: ViewStateManager())
+        
+       // ActivityCalendarView()
+        ContentView4()
+        
         //ContentView2()
     }
 }
+
+
+
+//func nextMonth() {
+//    withAnimation {
+//        currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+//        generateActivitiesForMonth()
+//    }
+//}
+
