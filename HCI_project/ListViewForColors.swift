@@ -1,45 +1,8 @@
 import SwiftUI
 
-struct ContentView2: View {
-    var body: some View {
-        TabView {
-            ListView()
-                .tabItem {
-                    VStack {
-                        Image(systemName: "circle.hexagongrid.fill")
-                        Text("Activity")
-                    }
-                }
-            
-            Text("Groceries")
-                .tabItem {
-                    VStack {
-                        Image(systemName: "cart")
-                        Text("Groceries")
-                    }
-                }
-            
-            Text("Recipes")
-                .tabItem {
-                    VStack {
-                        Image(systemName: "book")
-                        Text("Recipes")
-                    }
-                }
-            
-            Text("Delivery")
-                .tabItem {
-                    VStack {
-                        Image(systemName: "bag")
-                        Text("Delivery")
-                    }
-                }
-        }
-        .tint(.green)
-    }
-}
-
 struct ListView: View {
+    @ObservedObject var viewState: ViewStateManager
+    
     var body: some View {
         NavigationView {
             List {
@@ -61,27 +24,16 @@ struct ListView: View {
             .navigationTitle("Activity")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    HStack(spacing: 12) {
-                        Menu {
-                            Button("List View", action: {})
-                        } label: {
-                            HStack {
-                                Text("List View")
-                                    .foregroundColor(.green)
-                                Image(systemName: "chevron.down")
-                                    .foregroundColor(.green)
-                            }
+                    Menu {
+                        Button("Calendar View") {
+                            viewState.currentView = .calendar
                         }
-                        
-                        Button(action: {}) {
-                            Circle()
-                                .fill(Color.gray.opacity(0.2))
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    Image(systemName: "person.crop.circle.fill")
-                                        .foregroundColor(.gray)
-                                        .font(.system(size: 32))
-                                )
+                    } label: {
+                        HStack {
+                            Text("List View")
+                                .foregroundColor(.green)
+                            Image(systemName: "chevron.down")
+                                .foregroundColor(.green)
                         }
                     }
                 }
@@ -96,7 +48,7 @@ struct ActivitySection: View {
     var colors: [Color] = []
     
     var body: some View {
-        NavigationLink(destination: Text("Detail View")) {
+        NavigationLink(destination: TodayDetailView()) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(title)
                     .font(.title2)
@@ -123,5 +75,5 @@ struct ActivitySection: View {
 }
 
 #Preview {
-    ContentView2()
+    ListView(viewState: ViewStateManager())
 }

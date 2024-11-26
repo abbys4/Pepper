@@ -7,9 +7,8 @@
 
 import SwiftUI
 
-
-
 struct ActivityCalendarView: View {
+    @ObservedObject var viewState: ViewStateManager
     @State private var selectedDate = Date()
     @State private var showingCalendarOptions = false
     
@@ -36,12 +35,9 @@ struct ActivityCalendarView: View {
                         .bold()
                     Spacer()
                     Menu {
-                        
-                        //Button("List View", action: {
-                        NavigationLink("ListView", destination: ContentView())
-                            
-                            
-                        //})
+                        Button("List View") {
+                            viewState.currentView = .list
+                        }
                     } label: {
                         HStack {
                             Text("Calendar View")
@@ -223,7 +219,7 @@ struct TabBarItem: View {
 
 struct ActivityCalendarView_Previews: PreviewProvider {
     static var previews: some View {
-        ActivityCalendarView()
+        ActivityCalendarView(viewState: ViewStateManager())
         //ContentView2()
     }
 }

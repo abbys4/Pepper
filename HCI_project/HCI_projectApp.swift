@@ -11,8 +11,7 @@ import SwiftUI
 struct HCI_projectApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
-            ToolbarSolutionView()
+            ContentView2()
         }
     }
 }

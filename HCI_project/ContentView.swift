@@ -7,30 +7,54 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct ContentView2: View {
+    @StateObject private var viewState = ViewStateManager()
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Updated Hello PEPPER")
+        TabView {
+            if viewState.currentView == .list {
+                ListView(viewState: viewState)
+                    .tabItem {
+                        VStack {
+                            Image(systemName: "circle.hexagongrid.fill")
+                            Text("Activity")
+                        }
+                    }
+            } else {
+                ActivityCalendarView(viewState: viewState)
+                    .tabItem {
+                        VStack {
+                            Image(systemName: "circle.hexagongrid.fill")
+                            Text("Activity")
+                        }
+                    }
+            }
             
-        }
-        .padding()
-        
-        
-    }
-    var body2: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Updated Hello PEPPER")
+            Text("Groceries")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "cart")
+                        Text("Groceries")
+                    }
+                }
             
+            Text("Recipes")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "book")
+                        Text("Recipes")
+                    }
+                }
+            
+            Text("Delivery")
+                .tabItem {
+                    VStack {
+                        Image(systemName: "bag")
+                        Text("Delivery")
+                    }
+                }
         }
-        .padding()
-        
-        
+        .tint(.green)
     }
 }
 
